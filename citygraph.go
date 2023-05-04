@@ -24,11 +24,14 @@ var (
 )
 
 var (
+	PropertyNameBodyText = "body"
+	// PropertyNameBodyTextFormat identifies the format for the module's display, default is
+	// "content-flex" but also possible in "content-map".
+	PropertyNameFormat = "format"
 	// PropertyNameImgURL identifies a property containing a URL pointing at an
 	// image that should be used for promotion, eg. OpenGraph, feed entries, etc.
 	PropertyNameImgURL = "img_url"
-	PropertyNameBodyText    = "body"
-	PropertyNameJSFunc      = "javascript_function"
+	PropertyNameJSFunc = "javascript_function"
 )
 
 // LngLat represents a geographic coordinate in the map. Encodes directly into
@@ -105,6 +108,7 @@ type Module struct {
 	Headline     string                 `json:"headline_html,omitempty"`
 	Description  string                 `json:"desc"`
 	FeatureImage string                 `json:"img_url"`
+	Format       string                 `json:"format"`
 	Categories   []string               `json:"categories"`
 	Creators     []string               `json:"creators"`
 	Camera       map[string]interface{} `json:"camera,omitempty"`

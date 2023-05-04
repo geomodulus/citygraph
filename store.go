@@ -54,6 +54,9 @@ func (s *Store) WriteModule(ctx context.Context, module *Module) error {
 			return err
 		}
 	}
+	if err := s.SetVertexProperties(ctx, q, PropertyNameFormat, module.Format); err != nil {
+		return err
+	}
 	if err := s.SetVertexProperties(ctx, q, "published_on", module.PubDate); err != nil {
 		return err
 	}

@@ -75,6 +75,7 @@ func TestWriteModule(t *testing.T) {
 			},
 		},
 		Creators:     []string{"John Dole", "Jane Dole"},
+		Format:       "content-map",
 		PubDate:      "2022-06-14",
 		LastUpdated:  "2022-09-01T10:30:00-05:00",
 		Categories:   []string{"Open Data", "User-Generated"},
@@ -126,6 +127,9 @@ func TestWriteModule(t *testing.T) {
 	}, {
 		Q:     NewVertexPropertyQuery(avq, "camera"),
 		Value: Json(cameraBytes),
+	}, {
+		Q:     NewVertexPropertyQuery(avq, PropertyNameFormat),
+		Value: StringVal(module.Format),
 	}, {
 		Q:     NewVertexPropertyQuery(avq, "published_on"),
 		Value: StringVal(module.PubDate),
