@@ -1,6 +1,6 @@
 module github.com/geomodulus/citygraph
 
-go 1.18
+go 1.20
 
 require (
 	github.com/geomodulus/witness v0.0.0-20230322160758-eed998080dfc
