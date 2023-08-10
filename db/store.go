@@ -20,6 +20,14 @@ func (s *Store) WriteJS(ctx context.Context, q *pb.VertexQuery, fn string) error
 	return s.SetVertexProperties(ctx, q, citygraph.PropertyNameJSFunc, fn)
 }
 
+func (s *Store) WriteTeaserGeoJSON(ctx context.Context, q *pb.VertexQuery, teaser map[string]interface{}) error {
+	return s.SetVertexProperties(ctx, q, "teaser", teaser)
+}
+
+func (s *Store) WriteTeaserJS(ctx context.Context, q *pb.VertexQuery, fn string) error {
+	return s.SetVertexProperties(ctx, q, "teaser_function", fn)
+}
+
 func (s *Store) WriteArticle(ctx context.Context, article *citygraph.Article) error {
 	id, err := article.UUID()
 	if err != nil {
