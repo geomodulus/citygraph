@@ -104,6 +104,61 @@ func (s *Store) WriteArticle(ctx context.Context, article *citygraph.Article) er
 	return nil
 }
 
+func (s *Store) WriteArticleGeoJSONDataset(ctx context.Context, aUUID uuid.UUID, dataset *citygraph.GeoJSONDataset) error {
+	id, err := dataset.UUID()
+	if err != nil {
+		return err
+	}
+	if err := s.CreateVertex(ctx, citygraph.UUID(id), &citygraph.NewsGeoJSON); err != nil {
+		return err
+	}
+
+	q, err := dataset.VertexQuery()
+	if err != nil {
+		return err
+	}
+	if err := s.SetVertexProperties(ctx, q, citygraph.PropertyNameSource, dataset.Source); err != nil {
+		return err
+	}
+	if err := s.SetVertexProperties(ctx, q, "sources", dataset.Sources); err != nil {
+		return err
+	}
+	if err := s.SetVertexProperties(ctx, q, citygraph.PropertyNameGeoJSONURL, dataset.URL); err != nil {
+		return err
+	}
+	if err := s.CreateEdge(ctx, citygraph.UUID(aUUID), &citygraph.IllustratedBy, citygraph.UUID(id)); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (s *Store) WriteArticleGeoJSONDatasetWithData(ctx context.Context, aUUID uuid.UUID, dataset *citygraph.GeoJSONDataset, data interface{}) error {
+	id, err := dataset.UUID()
+	if err != nil {
+		return err
+	}
+	if err := s.CreateVertex(ctx, citygraph.UUID(id), &citygraph.NewsGeoJSON); err != nil {
+		return err
+	}
+	q, err := dataset.VertexQuery()
+	if err != nil {
+		return err
+	}
+	if err := s.SetVertexProperties(ctx, q, citygraph.PropertyNameSource, dataset.Source); err != nil {
+		return err
+	}
+	if err := s.SetVertexProperties(ctx, q, "sources", dataset.Sources); err != nil {
+		return err
+	}
+	if err := s.SetVertexProperties(ctx, q, citygraph.PropertyNameGeoJSONFeature, data); err != nil {
+		return err
+	}
+	if err := s.CreateEdge(ctx, citygraph.UUID(aUUID), &citygraph.IllustratedBy, citygraph.UUID(id)); err != nil {
+		return err
+	}
+	return nil
+}
+
 func (s *Store) WriteModule(ctx context.Context, module *citygraph.Module) error {
 	id, err := module.UUID()
 	if err != nil {

@@ -183,29 +183,109 @@ func TestWriteArticle(t *testing.T) {
 	}
 }
 
-//func TestWriteFeedEntryHTML(t *testing.T) {
-//	aID := citygraph.NewID()
-//	aUUID := citygraph.UUID(aID)
-//	fakeGraph := &graphtest.FakeGraphClient{}
-//	store := &Store{fakeGraph}
-//
-//	article := &citygraph.Article{
-//		ID: aID.String(),
-//	}
-//	q, _ := article.VertexQuery()
-//	if err := store.WriteFeedEntryHTML(context.Background(), q, "feed entry html"); err != nil {
-//		t.Errorf("store.WriteFeedEntryHTML() returned err: %v", err)
-//	}
-//
-//	avq := citygraph.NewSpecificVertexQuery(aUUID)
-//	wantReqs := []*pb.SetVertexPropertiesRequest{{
-//		Q:     citygraph.NewVertexPropertyQuery(avq, "feed_entry_html"),
-//		Value: citygraph.StringVal("feed entry html"),
-//	}}
-//	if diff := cmp.Diff(wantReqs, fakeGraph.SetVertexPropertiesReqs, protocmp.Transform()); diff != "" {
-//		t.Errorf("store.WriteFeedEntryHTML() sent graph req diff:\n%s\n", diff)
-//	}
-//}
+func TestWriteArticleGeoJSONDataset(t *testing.T) {
+	aID, dID := citygraph.NewID(), citygraph.NewID()
+	dUUID := citygraph.UUID(dID)
+	fakeGraph := &graphtest.FakeGraphClient{}
+	store := &Store{fakeGraph}
+
+	dataset := &citygraph.GeoJSONDataset{
+		ID:   dID.String(),
+		Name: "Dataset name here",
+		URL:  "https://dataset.url",
+		Source: &citygraph.Source{
+			URL: "https://some.source.url",
+		},
+	}
+	if err := store.WriteArticleGeoJSONDataset(context.Background(), aID, dataset); err != nil {
+		t.Errorf("store.WriteArticleGeoJSONDataset() returned err: %v", err)
+	}
+
+	srcBytes, _ := json.Marshal(dataset.Source)
+	dvq := citygraph.NewSpecificVertexQuery(dUUID)
+	wantCreateVertexReqs := []*pb.Vertex{{
+		Id: dUUID,
+		T:  &citygraph.NewsGeoJSON,
+	}}
+	if diff := cmp.Diff(wantCreateVertexReqs, fakeGraph.CreateVertexReqs, protocmp.Transform()); diff != "" {
+		t.Errorf("store.WriteArticleGeoJSONDataset() sent graph create vertex req diff:\n%s\n", diff)
+	}
+
+	wantSetVertexPropertiesReqs := []*pb.SetVertexPropertiesRequest{{
+		Q:     citygraph.NewVertexPropertyQuery(dvq, citygraph.PropertyNameSource),
+		Value: citygraph.Json(srcBytes),
+	}, {
+		Q:     citygraph.NewVertexPropertyQuery(dvq, "sources"),
+		Value: citygraph.Json([]byte("null")),
+	}, {
+		Q:     citygraph.NewVertexPropertyQuery(dvq, citygraph.PropertyNameGeoJSONURL),
+		Value: citygraph.StringVal(dataset.URL),
+	}}
+	if diff := cmp.Diff(wantSetVertexPropertiesReqs, fakeGraph.SetVertexPropertiesReqs, protocmp.Transform()); diff != "" {
+		t.Errorf("store.WriteArticleGeoJSONDataset() sent graph set vertex properties req diff:\n%s\n", diff)
+	}
+
+	wantCreateEdgeReqs := []*pb.EdgeKey{{
+		OutboundId: citygraph.UUID(aID),
+		T:          &citygraph.IllustratedBy,
+		InboundId:  citygraph.UUID(dID),
+	}}
+	if diff := cmp.Diff(wantCreateEdgeReqs, fakeGraph.CreateEdgeReqs, protocmp.Transform()); diff != "" {
+		t.Errorf("store.WriteArticleGeoJSONDataset() sent graph create edge req diff:\n%s\n", diff)
+	}
+}
+
+func TestWriteArticleGeoJSONDatasetWithData(t *testing.T) {
+	aID, dID := citygraph.NewID(), citygraph.NewID()
+	dUUID := citygraph.UUID(dID)
+	fakeGraph := &graphtest.FakeGraphClient{}
+	store := &Store{fakeGraph}
+
+	dataset := &citygraph.GeoJSONDataset{
+		ID:   dID.String(),
+		Name: "Dataset name here",
+		Sources: []*citygraph.Source{{
+			URL: "https://some.source.url",
+		}},
+	}
+	if err := store.WriteArticleGeoJSONDatasetWithData(context.Background(), aID, dataset, "some data"); err != nil {
+		t.Errorf("store.WriteArticleGeoJSONDatasetWithData() returned err: %v", err)
+	}
+
+	srcsBytes, _ := json.Marshal(dataset.Sources)
+	dataBytes, _ := json.Marshal("some data")
+	dvq := citygraph.NewSpecificVertexQuery(dUUID)
+	wantCreateVertexReqs := []*pb.Vertex{{
+		Id: dUUID,
+		T:  &citygraph.NewsGeoJSON,
+	}}
+	if diff := cmp.Diff(wantCreateVertexReqs, fakeGraph.CreateVertexReqs, protocmp.Transform()); diff != "" {
+		t.Errorf("store.WriteArticleGeoJSONDatasetWithData() sent graph create vertex req diff:\n%s\n", diff)
+	}
+
+	wantSetVertexPropertiesReqs := []*pb.SetVertexPropertiesRequest{{
+		Q:     citygraph.NewVertexPropertyQuery(dvq, citygraph.PropertyNameSource),
+		Value: citygraph.Json([]byte("null")),
+	}, {
+		Q:     citygraph.NewVertexPropertyQuery(dvq, "sources"),
+		Value: citygraph.Json(srcsBytes),
+	}, {
+		Q:     citygraph.NewVertexPropertyQuery(dvq, citygraph.PropertyNameGeoJSONFeature),
+		Value: citygraph.Json(dataBytes),
+	}}
+	if diff := cmp.Diff(wantSetVertexPropertiesReqs, fakeGraph.SetVertexPropertiesReqs, protocmp.Transform()); diff != "" {
+		t.Errorf("store.WriteArticleGeoJSONDatasetWithData() sent graph set vertex properties req diff:\n%s\n", diff)
+	}
+
+	wantCreateEdgeReqs := []*pb.EdgeKey{{
+		OutboundId: citygraph.UUID(aID),
+		T:          &citygraph.IllustratedBy,
+		InboundId:  citygraph.UUID(dID),
+	}}
+	if diff := cmp.Diff(wantCreateEdgeReqs, fakeGraph.CreateEdgeReqs, protocmp.Transform()); diff != "" {
+		t.Errorf("store.WriteArticleGeoJSONDatasetWithData() sent graph create edge req diff:\n%s\n", diff)
+	}
+}
 
 func TestWriteModule(t *testing.T) {
 	aID := citygraph.NewID()

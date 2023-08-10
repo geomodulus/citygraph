@@ -31,6 +31,29 @@ var (
 	PropertyNameJSFunc = "javascript_function"
 )
 
+// Dataset property names.
+var (
+	// PropertyNameSource identifies a property containing a source object
+	// that describes the provider or the dataset and the license under which
+	// it is being used.
+	PropertyNameSource = "source"
+)
+
+// GeoJSON property names.
+var (
+	// PropertyNameGeoJSONFeature identifies a property containing a GeoJSON
+	// feature or feature collection object.
+	PropertyNameGeoJSONFeature = "geojson_feature"
+	// PropertyNameGeoJSONShape identifies a property containing GeoJSON
+	// compatible geometry that can be included in a feature or feature
+	// collection object.
+	PropertyNameGeoJSONShape = "geojson_shape"
+	// PropertyNameGeoJSONURL identifies a property containing a URL string
+	// pointing at a location that will return a valid GeoJSON feature or
+	// feeature collection.
+	PropertyNameGeoJSONURL = "geojson_url"
+)
+
 // LngLat represents a geographic coordinate in the map. Encodes directly into
 // a Mapbox-compatible json object.
 type LngLat struct {
