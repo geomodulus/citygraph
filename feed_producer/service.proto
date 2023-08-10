@@ -1,0 +1,101 @@
+syntax = "proto3";
+package feed_producer;
+
+option go_package = "./pb";
+
+import "google/protobuf/empty.proto";
+import "google/protobuf/duration.proto";
+import "google/protobuf/timestamp.proto";
+
+enum ContentType {
+  CONTENT_TYPE_UNKNOWN = 0;
+  // A local point-of-interest.
+  POINT_OF_INTEREST = 1;
+  // Article provided by a newswire service.
+  NEWSWIRE_ARTICLE = 2;
+  // Article owned by Geomodulus.
+  ARTICLE = 3;
+  // Sports content.
+  SPORTS = 4;
+  // Transit content.
+  TRANSIT = 5;
+  // Bulletin provided by a newswire service.
+  NEWSWIRE_BULLETIN = 6;
+  // External link, opened in a new window.
+  WEB_LINK = 7;
+}
+
+message ContentItem {
+  // The ID of this entry in the feed. Any given content ID can be inserted
+  // into the feed multiple time, this ID identifies each insertion uniquely.
+  string feed_id = 1;
+  // The UUID of the graph vertex of the content inserted here.
+  string content_id = 2;
+  // Timestamp indicated when this content item was inserted in the feed.
+  google.protobuf.Timestamp added_at = 3;
+}
+
+message AddContentRequest {
+  // Type of content pointed at by 
+  ContentType content_type = 1;
+  // A UUID string identifying the graph vertex 
+  string id = 2;
+  // Minimum amount of time to wait between appearences in the feed.
+  google.protobuf.Duration wait = 3;
+  // If specified, content should be promoted starting now until this time.
+  google.protobuf.Timestamp until = 4;
+  // If specified, content should not be promoted at all after this date.
+  google.protobuf.Timestamp expires = 5;
+  // If specified, schedule this item to publish immediately.
+  bool ImmediateRelease = 6;
+}
+
+message RemoveContentRequest {
+  // A UUID string identifying the graph vertex to remove.
+  string id = 1;
+}
+
+message AddAnnouncementRequest {
+  // A UUID string identifying an annoucement graph vertex. 
+  string id = 1;
+}
+
+message ReadLatestRequest {
+  // Number of ContentItem messages to return.
+  int32 count = 1;
+}
+
+message ReadLatestResponse {
+  // Latest ContentItem messages from the feed.
+  repeated ContentItem latest = 1;
+}
+
+message QueueItemRequest {
+  // A UUID string identifying the graph vertex 
+  string id = 1;
+}
+
+message ReleaseItem {
+  // The UUID of the graph vertex of the content to be released.
+  string content_id = 1;
+  // The type of this vertex in Citygraph.
+  string vertex_type = 2;
+}
+
+// FeedProducer generates the primary live feeds for Geomodulus.
+service FeedProducer {
+  // AddAnnouncement is the method used to provided announcement to Feed Producer.
+  rpc AddAnnouncement(AddAnnouncementRequest) returns (google.protobuf.Empty) {}
+  // AddContent is the method used to provide content items to Feed Producer.
+  rpc AddContent(AddContentRequest) returns (google.protobuf.Empty) {}
+  // RemoveContent is the method used to tell Feed Producer to forget an item.
+  rpc RemoveContent(RemoveContentRequest) returns (google.protobuf.Empty) {}
+  // ReadLatest returns the latest items from the feed.
+  rpc ReadLatest(ReadLatestRequest) returns (ReadLatestResponse) {}
+  // ListActiveReleases returns a list of active releases only.
+  rpc ListActiveReleases(google.protobuf.Empty) returns (stream ReleaseItem) {}
+  // ListAllReleases returns a list of every release, active and waiting.
+  rpc ListAllReleases(google.protobuf.Empty) returns (stream ReleaseItem) {}
+  // QueueItem schedules an item for immediate release.
+  rpc QueueItem(QueueItemRequest) returns (google.protobuf.Empty) {}
+}
