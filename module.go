@@ -11,7 +11,7 @@ import (
 	"github.com/geomodulus/citygraph/pb"
 )
 
-var moduleType = &pb.Identifier{Value: "module"}
+var ModuleType = &pb.Identifier{Value: "module"}
 
 type Module struct {
 	ID           string                 `json:"id"`

@@ -17,7 +17,7 @@ import (
 )
 
 var (
-	articleType = &pb.Identifier{Value: "news-contributor-article"}
+	ArticleType = &pb.Identifier{Value: "news-contributor-article"}
 	IsRelated   = pb.Identifier{Value: "is-related"}
 )
 
