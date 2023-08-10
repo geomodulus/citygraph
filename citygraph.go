@@ -12,6 +12,15 @@ import (
 )
 
 var (
+	Torontoverse = &pb.Vertex{
+		Id: &pb.Uuid{
+			Value: MustParseUUIDBytes("ae5c6bb4-ffc1-11eb-b867-244bfe5bf61a"),
+		},
+		T: &NewsPublisher,
+	}
+)
+
+var (
 	// PropertyNameDisplayName identifies the name for this vertex that should
 	// be displayed when thnis vertex is viewed. If this data is meaningful, it
 	// should be duplicated in another property with a more descriptive name.

@@ -2,6 +2,9 @@ package db
 
 import (
 	"context"
+	"fmt"
+	"sort"
+
 	"github.com/geomodulus/citygraph"
 	"github.com/geomodulus/citygraph/pb"
 
@@ -228,6 +231,78 @@ func (s *Store) WriteModule(ctx context.Context, module *citygraph.Module) error
 		if err := s.SetVertexProperties(ctx, q, "teaser", module.Teaser); err != nil {
 			return err
 		}
+	}
+
+	return nil
+}
+
+type ArticleListing struct {
+	ID string `json:"id"`
+	// Name is the article headline, no HTML tags.
+	Name string `json:"name"`
+	// Headline is an <h1> tag containing the headline.
+	Headline   string   `json:"headline"`
+	Subhead    string   `json:"subhead"`
+	SlugPath   string   `json:"slug_path"`
+	PubDate    string   `json:"pubdate"`
+	UpdatedAt  string   `json:"updated_at"`
+	Authors    []string `json:"authors"`
+	Categories []string `json:"categories"`
+	ImgURL     string   `json:"img_url"`
+}
+
+func (s *Store) WriteArticleListings(ctx context.Context, _ *Store, articles []*citygraph.Article) error {
+	latest := []*ArticleListing{}
+	for _, article := range articles {
+		if article.PubDate == "" || !article.IsLive {
+			continue
+		}
+
+		articlePath, err := article.Path()
+		if err != nil {
+			return fmt.Errorf("failed to get article path: %w", err)
+		}
+		latest = append(latest, &ArticleListing{
+			ID:         article.ID,
+			Name:       article.Name,
+			Headline:   article.Headline,
+			Subhead:    article.Description,
+			SlugPath:   articlePath,
+			PubDate:    article.PubDate,
+			UpdatedAt:  article.LastUpdated,
+			Authors:    article.Authors,
+			Categories: article.Categories,
+			ImgURL:     article.FeatureImage,
+		})
+	}
+
+	sort.Slice(latest, func(i, j int) bool {
+		// Case where both items have UpdatedAt.
+		if latest[i].UpdatedAt != "" && latest[j].UpdatedAt != "" {
+			return latest[i].UpdatedAt > latest[j].UpdatedAt
+		}
+
+		// Case where only i item has UpdatedAt.
+		if latest[i].UpdatedAt != "" && latest[j].UpdatedAt == "" {
+			return latest[i].UpdatedAt > latest[j].PubDate
+		}
+
+		// Case where only j item has UpdatedAt.
+		if latest[i].UpdatedAt == "" && latest[j].UpdatedAt != "" {
+			return latest[i].PubDate > latest[j].UpdatedAt
+		}
+
+		// Case where neither item has UpdatedAt, compare PubDate.
+		return latest[i].PubDate > latest[j].PubDate
+	})
+
+	if err := s.SetVertexProperties(
+		ctx,
+		citygraph.NewSpecificVertexQuery(citygraph.Torontoverse.Id),
+		"latest_articles_public",
+		latest,
+	); err != nil {
+		return err
 	}
 
 	return nil
